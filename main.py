@@ -1,60 +1,32 @@
-import sys
-from find_word import find_all_files_in_dir
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QFileDialog, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QLabel, QPlainTextEdit
+import os, re, docx
 
-class MyWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Dinara help")
-        self.resize(1200, 600)
+def doc_to_string(filename:str) -> str:
+    doc = docx.Document(filename)
 
-        self.text_input = QPlainTextEdit("Введи слово, которое нужно найти\n"
-                                        "Нажми кнопку \"Select directory\"\n"
-                                        "Нажми кнопку \"Start\"\n"
-                                        "Внизу будет список всех файлов в этой директории (и поддиректориях), в которых нашлось нужное слово")
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
+    text = ""
+    for para in doc.paragraphs:
+        text += para.text + "\n"
 
-        self.button = QPushButton("Start")
-        self.button.setEnabled(False)
-        self.directory_button = QPushButton("Select Directory")
-        self.close_button = QPushButton("Close")
+    return text
 
-        self.button.clicked.connect(self.change_text)
-        self.close_button.clicked.connect(app.quit)
-        self.directory_button.clicked.connect(self.select_directory)
 
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.button)
-        button_layout.addWidget(self.directory_button)
-        button_layout.addWidget(self.close_button)
-        button_layout.addStretch()
-
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(button_layout)
-        main_layout.addWidget(self.text_input)
-        main_layout.addWidget(self.scroll_area)
-
-        central_widget = QWidget()
-        central_widget.setLayout(main_layout)
-
-        self.setCentralWidget(central_widget)
-
-    def select_directory(self):
-        self.directory = QFileDialog.getExistingDirectory(self, "Select Directory")
-        self.scroll_area.setWidget(QPlainTextEdit(""))
-        if self.directory != "":
-            self.button.setEnabled(True)
-
-    def change_text(self):
-        self.substring = self.text_input.toPlainText()
-        files = find_all_files_in_dir(self.directory, self.substring)
-        text = ""
+def find_all_files_in_dir(directory_in:str, phrase:str) -> list:
+    docx_files = []
+    for root, dirs, files in os.walk(directory_in):
         for file in files:
-            text += file + "\n"
-        self.scroll_area.setWidget(QPlainTextEdit(text))
+            if re.search(".*docx$", str(root + "/" + file)) and re.search(phrase, doc_to_string(str(root + "/" + file)), re.I):
+                print(root + "/" + file)
+                docx_files.append(root + "/" + file)
+    return docx_files
 
-app = QApplication(sys.argv)
-window = MyWindow()
-window.show()
-sys.exit(app.exec())
+def main():
+    directory = input("Введите путь до директории, либо .\\, если main.py лежит в нужном месте -> ")
+    substring = input("Введите слово/словосочетание, которое нужно найти в файлах -> ")
+    files = find_all_files_in_dir(directory, substring)
+    text = ""
+    for file in files:
+        text += file + "\n"
+    print(text)
+
+if __name__=="__main__":
+    main()
