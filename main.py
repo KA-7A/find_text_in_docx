@@ -15,7 +15,6 @@ def find_all_files_in_dir(directory_in:str, phrase:str) -> list:
     for root, dirs, files in os.walk(directory_in):
         for file in files:
             if re.search(".*docx$", str(root + "/" + file)) and re.search(phrase, doc_to_string(str(root + "/" + file)), re.I):
-                print(root + "/" + file)
                 docx_files.append(root + "/" + file)
     return docx_files
 
